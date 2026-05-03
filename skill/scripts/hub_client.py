@@ -1,4 +1,4 @@
-"""Agent WeChat Hub API Client.
+"""AgentWire Hub API Client.
 
 Provides a clean Python interface to the A2A messaging hub.
 """

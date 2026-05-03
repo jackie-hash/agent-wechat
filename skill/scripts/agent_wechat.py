@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Agent WeChat CLI — multi-agent messaging via A2A Hub.
+"""AgentWire CLI — cross-framework agent messaging via A2A Hub.
 
 Usage:
-  agent-wechat register --name my-agent [--type claude-code]
-  agent-wechat send @bob "Hello!"
-  agent-wechat send #team "PR ready"
-  agent-wechat send * "Broadcast message"
-  agent-wechat inbox [--json] [--ack]
-  agent-wechat list [--online] [--json]
-  agent-wechat status
-  agent-wechat group create <name>
-  agent-wechat group join <name>
-  agent-wechat group list [--json]
-  agent-wechat history [--with agent_name] [--json]
+  agentwire register --name my-agent [--type claude-code]
+  agentwire send @bob "Hello!"
+  agentwire send #team "PR ready"
+  agentwire send * "Broadcast message"
+  agentwire inbox [--json] [--ack]
+  agentwire list [--online] [--json]
+  agentwire status
+  agentwire group create <name>
+  agentwire group join <name>
+  agentwire group list [--json]
+  agentwire history [--with agent_name] [--json]
 """
 
 import argparse
@@ -82,7 +82,7 @@ async def cmd_register(args):
 async def cmd_send(args):
     client = get_client()
     if not client.api_key:
-        print("Not registered. Run 'agent-wechat register' first.", file=sys.stderr)
+        print("Not registered. Run 'agentwire register' first.", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -121,7 +121,7 @@ async def cmd_send(args):
 async def cmd_inbox(args):
     client = get_client()
     if not client.api_key:
-        print("Not registered. Run 'agent-wechat register' first.", file=sys.stderr)
+        print("Not registered. Run 'agentwire register' first.", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -159,7 +159,7 @@ async def cmd_inbox(args):
 async def cmd_list(args):
     client = get_client()
     if not client.api_key:
-        print("Not registered. Run 'agent-wechat register' first.", file=sys.stderr)
+        print("Not registered. Run 'agentwire register' first.", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -190,7 +190,7 @@ async def cmd_list(args):
 async def cmd_status(args):
     client = get_client()
     if not client.api_key:
-        print("Not registered. Run 'agent-wechat register' first.")
+        print("Not registered. Run 'agentwire register' first.")
         sys.exit(1)
 
     try:
@@ -214,7 +214,7 @@ async def cmd_status(args):
 async def cmd_group(args):
     client = get_client()
     if not client.api_key:
-        print("Not registered. Run 'agent-wechat register' first.", file=sys.stderr)
+        print("Not registered. Run 'agentwire register' first.", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -303,7 +303,7 @@ async def cmd_group(args):
 async def cmd_history(args):
     client = get_client()
     if not client.api_key:
-        print("Not registered. Run 'agent-wechat register' first.", file=sys.stderr)
+        print("Not registered. Run 'agentwire register' first.", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -350,7 +350,7 @@ async def cmd_read(args):
             return
 
         if not args.message_ids:
-            print("Usage: agent-wechat read --all  OR  agent-wechat read <id1> <id2> ...", file=sys.stderr)
+            print("Usage: agentwire read --all  OR  agentwire read <id1> <id2> ...", file=sys.stderr)
             sys.exit(1)
 
         await client.mark_read(args.message_ids)
@@ -444,7 +444,7 @@ async def cmd_listen(args):
                 if args.json:
                     print(json.dumps({"type": "offline_delivery", "count": count}, ensure_ascii=False))
                 else:
-                    print(f"📬 You have {count} pending message(s). Run 'agent-wechat inbox' to read.")
+                    print(f"📬 You have {count} pending message(s). Run 'agentwire inbox' to read.")
                 continue
 
             # New message
@@ -531,20 +531,20 @@ def _parse_prefix(content: str) -> tuple[str, str, str] | None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Agent WeChat — multi-agent messaging via A2A Hub",
+        description="AgentWire — cross-framework agent messaging via A2A Hub",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  agent-wechat register --name my-agent --type claude-code
-  agent-wechat send @bob "Hello from Alice!"
-  agent-wechat send "#dev-team: PR ready for review"
-  agent-wechat send '*: System maintenance in 5 min'
-  agent-wechat inbox --json
-  agent-wechat list --online --json
-  agent-wechat status
-  agent-wechat group create team-alpha
-  agent-wechat group join team-alpha
-  agent-wechat history --with bob --json
+  agentwire register --name my-agent --type claude-code
+  agentwire send @bob "Hello from Alice!"
+  agentwire send "#dev-team: PR ready for review"
+  agentwire send '*: System maintenance in 5 min'
+  agentwire inbox --json
+  agentwire list --online --json
+  agentwire status
+  agentwire group create team-alpha
+  agentwire group join team-alpha
+  agentwire history --with bob --json
 """,
     )
 
@@ -652,7 +652,7 @@ Examples:
             elif args.target_or_content:
                 args.content = args.target_or_content
             else:
-                print("Usage: agent-wechat send <@target|#group|*> <message>", file=sys.stderr)
+                print("Usage: agentwire send <@target|#group|*> <message>", file=sys.stderr)
                 sys.exit(1)
 
         asyncio.run(func(args))
