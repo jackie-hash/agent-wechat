@@ -116,6 +116,29 @@ class AgentRegistry:
 
         return new_key, key_prefix
 
+    async def rename_agent(self, agent_id: str, new_name: str) -> Agent | None:
+        """Rename an agent. Returns updated agent or raises ValueError if name taken."""
+        async with self.session_factory() as session:
+            # Check name uniqueness
+            existing = await session.execute(
+                select(Agent).where(Agent.name == new_name)
+            )
+            if existing.scalar_one_or_none():
+                raise ValueError(f"Agent name '{new_name}' is already taken")
+
+            result = await session.execute(
+                select(Agent).where(Agent.id == agent_id)
+            )
+            agent = result.scalar_one_or_none()
+            if agent is None:
+                return None
+
+            agent.name = new_name
+            agent.updated_at = datetime.now(timezone.utc)
+            await session.commit()
+            await session.refresh(agent)
+        return agent
+
     async def unregister(self, agent_id: str) -> bool:
         async with self.session_factory() as session:
             result = await session.execute(

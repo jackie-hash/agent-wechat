@@ -104,6 +104,25 @@ def create_agent_routes(registry: AgentRegistry) -> APIRouter:
             "message": "New API key generated. Update your config.json. Old key will work for 5 more minutes.",
         }
 
+    class RenameRequest(BaseModel):
+        name: str
+
+    @router.post("/me/rename")
+    async def rename_me(request: Request, body: RenameRequest):
+        agent_id = await require_auth(request)
+        try:
+            agent = await registry.rename_agent(agent_id, body.name)
+        except ValueError as e:
+            raise HTTPException(status_code=409, detail=str(e))
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        return {
+            "ok": True,
+            "id": agent.id,
+            "name": agent.name,
+            "message": f"Renamed to '{agent.name}'",
+        }
+
     @router.delete("/me")
     async def unregister(request: Request):
         agent_id = await require_auth(request)

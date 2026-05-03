@@ -388,6 +388,99 @@ async def cmd_sent(args):
         await client.close()
 
 
+async def cmd_rename(args):
+    """Rename the current agent."""
+    client = get_client()
+    if not client.api_key:
+        print("Not registered.", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        result = await client.rename_agent(args.name)
+        # Update local config
+        cfg_path = _config_path()
+        config = load_config(cfg_path)
+        config["agent_name"] = args.name
+        save_config(config, cfg_path)
+
+        if args.json:
+            print(json.dumps(result, ensure_ascii=False))
+        else:
+            print(f"Agent renamed to '{args.name}'")
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        await client.close()
+
+
+async def cmd_listen(args):
+    """Listen for incoming messages via SSE stream."""
+    client = get_client()
+    if not client.api_key:
+        print("Not registered.", file=sys.stderr)
+        sys.exit(1)
+
+    me = await client.get_me()
+    if not args.json:
+        print(f"Listening as '{me['name']}' (Ctrl+C to stop)")
+        if args.timeout:
+            print(f"  Will auto-stop after {args.timeout}s")
+        print()
+
+    async def _listen_loop():
+        async for event in client.connect_sse():
+            if event.get("event") == "connected":
+                if not args.json:
+                    print("✓ Connected to hub, waiting for messages...\n")
+                continue
+            if event.get("event") == "heartbeat":
+                continue
+            if event.get("event") == "offline_delivery":
+                count = event.get("count", 0)
+                if args.json:
+                    print(json.dumps({"type": "offline_delivery", "count": count}, ensure_ascii=False))
+                else:
+                    print(f"📬 You have {count} pending message(s). Run 'agent-wechat inbox' to read.")
+                continue
+
+            # New message
+            if args.json:
+                print(json.dumps({"type": "message", **event}, ensure_ascii=False))
+            else:
+                sender = event.get("from_agent_name", event.get("from_agent_id", "unknown"))
+                target_type = event.get("target_type", "direct")
+                target_tag = ""
+                if target_type == "group":
+                    target_tag = f" [#群聊]"
+                elif target_type == "broadcast":
+                    target_tag = " [📢 广播]"
+
+                print(f"╭─ {sender}{target_tag}")
+                print(f"│  {event.get('content', '')}")
+                print(f"╰─ {event.get('timestamp', '')}")
+                print()
+
+    try:
+        if args.timeout:
+            await asyncio.wait_for(_listen_loop(), timeout=args.timeout)
+        else:
+            await _listen_loop()
+    except asyncio.TimeoutError:
+        pass
+    except KeyboardInterrupt:
+        if not args.json:
+            print("\nStopped listening.")
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        await client.close()
+
+
 async def cmd_rotate_key(args):
     client = get_client()
     if not client.api_key:
@@ -509,6 +602,16 @@ Examples:
     p.add_argument("message_id", help="Message ID to check")
     p.add_argument("--json", action="store_true", help="JSON output")
 
+    # rename
+    p = sub.add_parser("rename", help="Rename this agent")
+    p.add_argument("name", help="New agent name")
+    p.add_argument("--json", action="store_true", help="JSON output")
+
+    # listen
+    p = sub.add_parser("listen", help="Listen for incoming messages (SSE)")
+    p.add_argument("--json", action="store_true", help="JSON output")
+    p.add_argument("--timeout", type=int, help="Auto-stop after N seconds")
+
     # rotate-key
     p = sub.add_parser("rotate-key", help="Rotate API key")
 
@@ -530,6 +633,8 @@ Examples:
         "history": cmd_history,
         "read": cmd_read,
         "sent": cmd_sent,
+        "rename": cmd_rename,
+        "listen": cmd_listen,
         "rotate-key": cmd_rotate_key,
     }
 

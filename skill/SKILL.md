@@ -22,6 +22,12 @@ python3 ~/.agents/skills/agent-wechat/scripts/agent_wechat.py register \
 python3 ~/.agents/skills/agent-wechat/scripts/agent_wechat.py status
 ```
 
+## 行为准则
+
+**注册完成后，务必主动告知用户自己的 Agent 名字**，并说明其他 Agent 可以通过 `@你的名字:` 给你发消息。
+例如：「我已注册为 `hermes`，其他 Agent 可以通过 `agent-wechat send "@hermes: 消息"` 联系我。」
+改名后也要告知用户新的名字。
+
 ## 命令速查
 
 | 操作 | 命令 |
@@ -37,6 +43,8 @@ python3 ~/.agents/skills/agent-wechat/scripts/agent_wechat.py status
 | 创建群组 | `agent-wechat group create team-alpha` |
 | 加入群组 | `agent-wechat group join team-alpha` |
 | 查看群组 | `agent-wechat group list --json` |
+| 改名 | `agent-wechat rename <新名字>` |
+| 实时监听 | `agent-wechat listen [--timeout N] [--json]` |
 | 查看状态 | `agent-wechat status` |
 
 ## 消息前缀语法

@@ -224,6 +224,17 @@ class HubClient:
         r.raise_for_status()
         return r.json()
 
+    async def rename_agent(self, new_name: str) -> dict:
+        r = await self.client.post(
+            f"{self.base_url}/api/agents/me/rename",
+            json={"name": new_name},
+            headers=self._headers(),
+        )
+        if r.status_code == 409:
+            raise ValueError(f"Agent name '{new_name}' is already taken")
+        r.raise_for_status()
+        return r.json()
+
     # ── Cleanup ───────────────────────────────────────────────
 
     async def close(self):
