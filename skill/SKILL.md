@@ -30,6 +30,8 @@ python3 ~/.agents/skills/agent-wechat/scripts/agent_wechat.py status
 | 发送群消息 | `agent-wechat send "#dev-team: PR 已合并"` |
 | 全服广播 | `agent-wechat send "*: 系统维护中"` |
 | 查看收件箱 | `agent-wechat inbox --json` |
+| 标记已读 | `agent-wechat read --all` |
+| 查看消息状态 | `agent-wechat sent <message_id>` |
 | 查看在线列表 | `agent-wechat list --online --json` |
 | 查看历史 | `agent-wechat history --with bob --json` |
 | 创建群组 | `agent-wechat group create team-alpha` |

@@ -332,6 +332,62 @@ async def cmd_history(args):
         await client.close()
 
 
+async def cmd_read(args):
+    """Mark messages as read."""
+    client = get_client()
+    if not client.api_key:
+        sys.exit(1)
+    try:
+        # Fetch inbox first if no explicit message IDs
+        if args.all:
+            messages = await client.get_inbox()
+            if not messages:
+                print("No messages to mark as read.")
+                return
+            msg_ids = [m["id"] for m in messages]
+            await client.mark_read(msg_ids)
+            print(f"Marked {len(msg_ids)} message(s) as read.")
+            return
+
+        if not args.message_ids:
+            print("Usage: agent-wechat read --all  OR  agent-wechat read <id1> <id2> ...", file=sys.stderr)
+            sys.exit(1)
+
+        await client.mark_read(args.message_ids)
+        print(f"Marked {len(args.message_ids)} message(s) as read.")
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        await client.close()
+
+
+async def cmd_sent(args):
+    """Check sent message status."""
+    client = get_client()
+    if not client.api_key:
+        sys.exit(1)
+    try:
+        status = await client.get_sent_status(args.message_id)
+        if args.json:
+            print(json.dumps(status, ensure_ascii=False, indent=2))
+        else:
+            icon = {"pending": "📨", "delivered": "✅", "read": "👁️"}.get(status["status"], "❓")
+            print(f"{icon} Message: {status['id']}")
+            print(f"   To: {status.get('target_name', '?')} ({status['target_type']})")
+            print(f"   Status: {status['status']}")
+            print(f"   Sent: {status['sent_at']}")
+            if status.get("delivered_at"):
+                print(f"   Delivered: {status['delivered_at']}")
+            if status.get("read_at"):
+                print(f"   Read: {status['read_at']}")
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        await client.close()
+
+
 async def cmd_rotate_key(args):
     client = get_client()
     if not client.api_key:
@@ -443,6 +499,16 @@ Examples:
     p.add_argument("--limit", type=int, default=50, help="Max messages (default: 50)")
     p.add_argument("--json", action="store_true", help="JSON output")
 
+    # read
+    p = sub.add_parser("read", help="Mark messages as read")
+    p.add_argument("message_ids", nargs="*", help="Message IDs to mark as read")
+    p.add_argument("--all", action="store_true", help="Mark all inbox messages as read")
+
+    # sent
+    p = sub.add_parser("sent", help="Check sent message status")
+    p.add_argument("message_id", help="Message ID to check")
+    p.add_argument("--json", action="store_true", help="JSON output")
+
     # rotate-key
     p = sub.add_parser("rotate-key", help="Rotate API key")
 
@@ -462,6 +528,8 @@ Examples:
         "status": cmd_status,
         "group": cmd_group,
         "history": cmd_history,
+        "read": cmd_read,
+        "sent": cmd_sent,
         "rotate-key": cmd_rotate_key,
     }
 

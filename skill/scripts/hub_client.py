@@ -108,6 +108,23 @@ class HubClient:
         r.raise_for_status()
         return r.json().get("messages", [])
 
+    async def mark_read(self, message_ids: list[str]) -> dict:
+        r = await self.client.post(
+            f"{self.base_url}/api/messages/read",
+            json={"message_ids": message_ids},
+            headers=self._headers(),
+        )
+        r.raise_for_status()
+        return r.json()
+
+    async def get_sent_status(self, message_id: str) -> dict:
+        r = await self.client.get(
+            f"{self.base_url}/api/messages/sent-status/{message_id}",
+            headers=self._headers(),
+        )
+        r.raise_for_status()
+        return r.json()
+
     async def ack_inbox(self, message_ids: list[str]) -> dict:
         r = await self.client.post(
             f"{self.base_url}/api/messages/inbox/ack",

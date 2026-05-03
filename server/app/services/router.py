@@ -233,7 +233,7 @@ class MessageRouter:
             ]
 
     async def ack_messages(self, agent_id: str, message_ids: list[str]):
-        """Mark messages as delivered (acknowledged)."""
+        """Mark messages as delivered (acknowledged receipt)."""
         if not message_ids:
             return
         now = datetime.now(timezone.utc)
@@ -244,6 +244,39 @@ class MessageRouter:
                 .values(delivery_status="delivered", delivered_at=now)
             )
             await session.commit()
+
+    async def mark_read(self, message_ids: list[str]):
+        """Mark messages as read by the recipient."""
+        if not message_ids:
+            return
+        now = datetime.now(timezone.utc)
+        async with self.session_factory() as session:
+            await session.execute(
+                update(Message)
+                .where(Message.id.in_(message_ids))
+                .values(delivery_status="read", read_at=now)
+            )
+            await session.commit()
+
+    async def get_sent_status(self, message_id: str) -> dict | None:
+        """Get the delivery/read status of a sent message."""
+        async with self.session_factory() as session:
+            result = await session.execute(
+                select(Message).where(Message.id == message_id)
+            )
+            msg = result.scalar_one_or_none()
+            if not msg:
+                return None
+            return {
+                "id": msg.id,
+                "status": msg.delivery_status,
+                "target_type": msg.target_type,
+                "target_name": await self._resolve_target_name(msg.target_type, msg.target_id),
+                "content": msg.content[:100] if msg.content else "",
+                "sent_at": msg.created_at.isoformat() if msg.created_at else "",
+                "delivered_at": msg.delivered_at.isoformat() if msg.delivered_at else None,
+                "read_at": msg.read_at.isoformat() if msg.read_at else None,
+            }
 
     async def get_history(
         self, agent_id: str, with_agent: str | None = None, limit: int = 50,

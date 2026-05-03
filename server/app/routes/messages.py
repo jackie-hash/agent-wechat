@@ -85,6 +85,22 @@ def create_message_routes(
         await router_service.ack_messages(agent_id, message_ids)
         return {"ok": True}
 
+    @router.post("/read")
+    async def mark_read(request: Request):
+        agent_id = await require_auth(request)
+        body = await request.json()
+        message_ids = body.get("message_ids", [])
+        await router_service.mark_read(message_ids)
+        return {"ok": True, "count": len(message_ids)}
+
+    @router.get("/sent-status/{message_id}")
+    async def sent_status(request: Request, message_id: str):
+        await require_auth(request)
+        status = await router_service.get_sent_status(message_id)
+        if not status:
+            raise HTTPException(status_code=404, detail="Message not found")
+        return status
+
     @router.get("/history")
     async def get_history(
         request: Request,
