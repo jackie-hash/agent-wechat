@@ -151,10 +151,10 @@ class MessageRouter:
                     continue
             offline_for.append(tid)
 
-        # Update delivery status
+        # Update delivery status — always keep as "pending" until agent explicitly
+        # acks or reads. SSE push is just notification, not delivery confirmation.
         async with self.session_factory() as session:
-            final_status = "delivered" if not offline_for else "pending"
-            status_values = {"delivery_status": final_status}
+            status_values = {"delivery_status": "pending"}
             if delivered_to:
                 status_values["delivered_at"] = now
             await session.execute(
