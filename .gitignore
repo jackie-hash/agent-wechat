@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+data/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.DS_Store
+HERMES_INSTRUCTIONS.txt
+PUBLISH_TO_GITHUB.md

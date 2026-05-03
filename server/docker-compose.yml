@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  hub:
+    build: .
+    ports:
+      - "9999:9999"
+    volumes:
+      - hub_data:/app/data
+    environment:
+      - HUB_NAME=Agent WeChat Hub
+      - HUB_URL=http://localhost:9999
+      - HUB_VERSION=1.0.0
+      - DATABASE_URL=sqlite+aiosqlite:///./data/hub.db
+      - MASTER_API_KEY=${MASTER_API_KEY:-}
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+    read_only: false
+
+volumes:
+  hub_data:
